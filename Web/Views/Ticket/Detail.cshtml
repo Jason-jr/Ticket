@@ -1,0 +1,108 @@
+@{
+    ViewData["Title"] = "Ticket Detail";
+}
+
+@model TicketDetailViewModel
+
+<div class="jumbotron" style="align-items:center;width:50%;margin:0 auto;">
+    @{
+        if (Model.Auth.CanCreate || Model.Auth.CanUpdate)
+            await Html.RenderPartialAsync("_EditDetail", Model.Ticket, new ViewDataDictionary(ViewData) { { "Update",
+    Model.Id.HasValue } });
+        else
+            await Html.RenderPartialAsync("_ViewDetail", Model.Ticket);
+
+        <div class="container" style="text-align: right">
+            @if (Model.Auth.CanResolve)
+            {
+                <input type="button" class="btn btn-success" value="Resolve" onclick="Resolve()" />
+            }
+            @if (Model.Auth.CanDelete)
+            {
+                <input type="button" class="btn btn-danger" value="Delete" onclick="Delete()" />
+            }
+            @if (Model.Auth.CanCreate || Model.Auth.CanUpdate)
+            {
+                <input type="button" class="btn btn-primary" onclick="Save()" value="Save" />
+            }
+        </div>
+    }
+</div>
+
+@section Scripts {
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2022.1.301/styles/kendo.common.min.css" />
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2022.1.301/styles/kendo.bootstrap.min.css" />
+<script src="https://kendo.cdn.telerik.com/2022.1.301/js/kendo.all.min.js"></script>
+
+@if (Model.Auth.CanResolve)
+{
+<script>
+    function Resolve() {
+        var token = sessionStorage.getItem("token");
+        var id = '@(Model.Id.HasValue ? $"/{Model.Id}" : "")';
+        axios({ url: 'http://localhost:5252/api/ticket' + id + '/resolve', method: 'put', headers: { Authorization: `Bearer ${token}` } })
+            .then((resopnse) => location.href = '/Ticket')
+            .catch((error) => alert('resolve fail'));
+    }
+</script>
+}
+@if (Model.Auth.CanDelete)
+{
+<script>
+    function Delete() {
+        var token = sessionStorage.getItem("token");
+        var id = '@(Model.Id.HasValue ? $"/{Model.Id}" : "")';
+        axios({ url: 'http://localhost:5252/api/ticket' + id, method: 'delete', headers: { Authorization: `Bearer ${token}` } })
+            .then((resopnse) => location.href = '/Ticket')
+            .catch((error) => alert('delete fail'));
+    }
+</script>
+}
+@if (Model.Auth.CanCreate || Model.Auth.CanUpdate)
+{
+<script>
+    $(document).ready(function () {
+        var token = sessionStorage.getItem("token");
+        axios({ url: 'http://localhost:5252/api/config/tickettype', method: 'get', headers: { Authorization: `Bearer ${token}` } })
+            .then((response) => InitDropDown($('#Type'), 'value', 'id', response.data));
+        axios({ url: 'http://localhost:5252/api/config/ticketseverity', method: 'get', headers: { Authorization: `Bearer ${token}` } })
+            .then((response) => InitDropDown($('#Severity'), 'value', 'id', response.data));
+        axios({ url: 'http://localhost:5252/api/config/ticketpriority', method: 'get', headers: { Authorization: `Bearer ${token}` } })
+            .then((response) => InitDropDown($('#Priority'), 'value', 'id', response.data));
+    })
+
+    function InitDropDown(element, text, value, data) {
+        element.kendoDropDownList({
+            dataTextField: text,
+            dataValueField: value,
+            dataSource: data
+        });
+    }
+
+    function Save() {
+        var id = '@(Model.Id.HasValue ? $"/{Model.Id}" : "")';
+        var token = sessionStorage.getItem("token");
+        var data = {
+            priority: parseInt($("#Priority").data("kendoDropDownList").value()),
+            severity: parseInt($("#Severity").data("kendoDropDownList").value()),
+            summary: $('#Summary').val(),
+            description: $('#Description').val()
+        };
+
+        if (id == '')
+            data.type = parseInt($("#Type").data("kendoDropDownList").value());
+
+        var request = {
+            url: 'http://localhost:5252/api/ticket' + id,
+            method: id == '' ? 'post' : 'put',
+            headers: { Authorization: `Bearer ${token}` },
+            data: data
+        };
+
+        axios(request)
+            .then((response) => location.href = '/Ticket')
+            .catch((error) => alert('save fail'));
+    }
+</script>
+}
+}

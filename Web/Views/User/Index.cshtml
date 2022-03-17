@@ -1,0 +1,53 @@
+@{
+    ViewData["Title"] = "User";
+}
+
+<div class="container" style="text-align: right">
+    <button type="button" class="btn btn-primary" onclick="location.href='User/Detail';">Create</button>
+</div>
+<div id="grid"></div>
+
+@section Scripts {
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2022.1.301/styles/kendo.common.min.css" />
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2022.1.301/styles/kendo.bootstrap.min.css" />
+<script src="https://kendo.cdn.telerik.com/2022.1.301/js/kendo.all.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        var token = sessionStorage.getItem("token");
+        axios({ url: 'http://localhost:5252/api/user', method: 'get', headers: { Authorization: `Bearer ${token}` } })
+            .then((response) => InitGrid(response.data));
+    });
+
+    function InitGrid(users) {
+        var dataSource = new kendo.data.DataSource({
+            data: users,
+            pageSize: 10
+        });
+
+        $("#grid").kendoGrid({
+            dataSource: dataSource,
+            pageable: {
+                refresh: true
+            },
+            columns: [{
+                field: "account",
+                title: "Account"
+            }, {
+                template: "<input class='statusClass' disable='disabled' #if (!disable) { # checked='checked' # } # type='checkbox' />",
+                title: 'Status'
+            }],
+            height: 500,
+            selectable: true,
+            change: function () {
+                var gview = $("#grid").data("kendoGrid");
+                var selectedItem = gview.dataItem(gview.select());
+                window.location.href = 'User/Detail/' + selectedItem.id;
+            },
+            dataBound: function() {
+              $(".statusClass").kendoSwitch({ enabled: false });
+            }
+        });
+    }
+</script>
+}

@@ -1,0 +1,61 @@
+@{
+    Layout = null;
+    ViewData["Title"] = "Login";
+}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Web</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Web.styles.css" asp-append-version="true" />
+</head>
+
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            
+        </nav>
+    </header>
+    <div class="container">
+        <main role="main" class="pb-3">
+
+            <div class="jumbotron" style="display:flex;align-items:center;width:50%;margin:0 auto;">
+                <form style="width:100%" method="POST">
+                    <div class="mb-3 row">
+                        <label for="Account" class="col-sm-2 col-form-label">Account</label>
+                        <div class="col-sm-10">
+                            <input type="text" class="form-control" id="Account" name="Account">
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <label for="Password" class="col-sm-2 col-form-label">Password</label>
+                        <div class="col-sm-10">
+                            <input type="password" class="form-control" id="Password" name="Password">
+                        </div>
+                    </div>
+                    <div class="mb-3 row">
+                        <div class="col-sm-10" style="margin:0 auto;text-align:center;color:red;">@ViewBag.ErrorMsg
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2 col-6 mx-auto" style="text-align:center">
+                        <button class="btn btn-primary" type="submit">Login</button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+       sessionStorage.clear() 
+    </script>
+</body>
+
+</html>

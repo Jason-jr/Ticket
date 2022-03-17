@@ -1,0 +1,108 @@
+@{
+    ViewData["Title"] = "User Detail";
+}
+
+@model UserDetailViewModel
+
+<div class="jumbotron" style="align-items:center;width:50%;margin:0 auto;">
+    <form id="ticket" style="width:100%" method="POST">
+        <div class="mb-3 row">
+            <label for="Account" class="col-sm-2 col-form-label">Account</label>
+            <div class="col-sm-10">
+                <input type="text" class="form-control" id="Account" name="Account" value="@Model.User.Account" @(Model.Id.HasValue ? "disabled" : "") />
+            </div>
+        </div>
+        <div class="mb-3 row">
+            <label for="Password" class="col-sm-2 col-form-label">Password</label>
+            <div class="col-sm-10">
+                <input type="password" class="form-control" id="Password" name="Password"
+                    onchange="$('#NewPassword').val(this.value)" value="@(Model.Id.HasValue ? "has password" : "")" />
+                <input type="hidden" id="NewPassword" />
+            </div>
+        </div>
+        <div class="mb-3 row">
+            <label for="Status" class="col-sm-2 col-form-label">Status</label>
+            <div class="col-sm-10">
+                <input type="checkbox" id="Status" @(Model.User.Disable ? "" : "checked='checked'") />
+            </div>
+        </div>
+        <div class="mb-3 row">
+            <label for="Description" class="col-sm-2 col-form-label">Roles</label>
+            <div class="col-sm-10">
+                <select id="Roles"></select>
+                <input type="hidden" id="AddRoles" />
+                <input type="hidden" id="DeleteRoles" />
+            </div>
+        </div>
+    </form>
+    <div class="container" style="text-align: right">
+        <input type="button" class="btn btn-primary" onclick="Save()" value="Save" />
+    </div>
+</div>
+
+@section Scripts {
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2022.1.301/styles/kendo.common.min.css" />
+<link rel="stylesheet" href="https://kendo.cdn.telerik.com/2022.1.301/styles/kendo.bootstrap.min.css" />
+<script src="https://kendo.cdn.telerik.com/2022.1.301/js/kendo.all.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        var token = sessionStorage.getItem("token");
+        $("#Status").kendoSwitch();
+        axios({ url: 'http://localhost:5252/api/config/role', method: 'get', headers: { Authorization: `Bearer ${token}` } })
+            .then((response) => InitDropDown($('#Roles'), 'name', 'id', response.data));
+    })
+
+    function InitDropDown(element, text, value, data) {
+        var selected = '@string.Join(",", Model.User.RoleIds)';
+
+        element.kendoMultiSelect({
+            dataTextField: text,
+            dataValueField: value,
+            downArrow: true,
+            dataSource: data,
+            value: selected.length > 0 ? selected.split(',').map(Number) : [],
+            select: function (e) { SetRoles(e.dataItem.id, $('#AddRoles'), $('#DeleteRoles')) },
+            deselect: function (e) { SetRoles(e.dataItem.id, $('#DeleteRoles'), $('#AddRoles')) }
+        });
+    }
+
+    function SetRoles(id, target, other) {
+        var targetArr = target.val().length > 0 ? target.val().split(',').map(Number) : [];
+        var otherArr = other.val().length > 0 ? other.val().split(',').map(Number) : [];
+
+        if (otherArr.includes(id)) {
+            otherArr = otherArr.filter(function (i) { return i != id; });
+            other.val(otherArr.join(','));
+        }
+        else {
+            targetArr.push(id);
+            target.val(targetArr.join(','));
+        }
+    }
+
+    function Save() {
+        var id = '@(Model.Id.HasValue ? $"/{Model.Id}" : "")';
+        var token = sessionStorage.getItem("token");
+        var data = {
+            disable: !$('#Status').data('kendoSwitch').value(),
+            addRoleIds: $('#AddRoles').val().length > 0 ? $('#AddRoles').val().split(',').map(Number) : [],
+            deleteRoleIds: $('#DeleteRoles').val().length > 0 ? $('#DeleteRoles').val().split(',').map(Number) : []
+        };
+
+        if (id == '') data.account = $('#Account').val();
+        if ($('#NewPassword').val().length > 0) data.password = $('#NewPassword').val();
+
+        var request = {
+            url: 'http://localhost:5252/api/user' + id,
+            method: id == '' ? 'post' : 'put',
+            headers: { Authorization: `Bearer ${token}` },
+            data: data
+        };
+        debugger;
+        axios(request)
+            .then((response) => location.href = '/User')
+            .catch((error) => alert('save fail'));
+    }
+</script>
+}
